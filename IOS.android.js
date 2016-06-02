@@ -33,13 +33,14 @@ export default class IOS extends Component {
         dataSource:new ListView.DataSource({
           rowHasChanged:(row1,row2)=>row1!==row2,
         }),  
-        loaded:false,
+        isRefreshing:true,
         loadMore: false,
         newContent:null,
     };
   }
 
   componentDidMount(){
+    this.getAsycStorage();
     this.fetchNewsData();
   }
 
@@ -59,6 +60,16 @@ export default class IOS extends Component {
               colors={['#8b4513']}/>}/>
       </View>
     );
+  }
+
+    getAsycStorage(){
+    AsyncStorage.getItem('iOSJson', (err, result) => {
+      if(result){
+      this.setState({
+          dataSource:this.state.dataSource.cloneWithRows(JSON.parse(result).results),
+      });
+      }
+    });
   }
 
  
@@ -102,14 +113,16 @@ export default class IOS extends Component {
     fetch(url+pageIndex)
       .then((response) => response.json())
       .then((responseData) => {
+         AsyncStorage.setItem('iOSJson',JSON.stringify(responseData));
         this.setState({
           newContent:responseData.results,
           dataSource:this.state.dataSource.cloneWithRows(responseData.results),
-          loaded: true,
           isRefreshing:false
         });
         
-      }).catch((err)=>{ToastAndroid.show(err.message,3000)})
+      }).catch((err)=>{ToastAndroid.show(err.message,3000); this.setState({
+          isRefreshing:false
+        });})
       .done();
   }
 
@@ -121,12 +134,10 @@ export default class IOS extends Component {
      fetch(url+pageIndex)
       .then((response) => response.json())
       .then((responseData) => {
-        
         this.setState({
           newContent:[...this.state.newContent, ...responseData.results],
           dataSource:this.state.dataSource.cloneWithRows(this.state.newContent),
           loaded: true,
-          isRefreshing:false,
           loadmore:false
         });
       }).catch((err)=>{ToastAndroid.show(err.message,1000)})

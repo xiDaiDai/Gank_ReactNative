@@ -33,14 +33,25 @@ export default class Video extends Component {
         dataSource:new ListView.DataSource({
           rowHasChanged:(row1,row2)=>row1!==row2,
         }),  
-        loaded:false,
+        isRefreshing:true,
         loadMore: false,
         newContent:null,
     };
   }
 
   componentDidMount(){
+    this.getAsycStorage();
     this.fetchNewsData();
+  }
+
+ getAsycStorage(){
+    AsyncStorage.getItem('videosJson', (err, result) => {
+      if(result){
+      this.setState({
+          dataSource:this.state.dataSource.cloneWithRows(JSON.parse(result).results),
+      });
+      }
+    });
   }
 
   render() {
@@ -110,20 +121,14 @@ export default class Video extends Component {
         this.setState({
           newContent:responseData.results,
           dataSource:this.state.dataSource.cloneWithRows(responseData.results),
-          loaded: true,
           isRefreshing:false
         });
         
-       AsyncStorage.setItem('NewsCache',JSON.stringify(responseData),()=>{
-       
-       //  ToastAndroid.show(,2000);
-       });
-        // ToastAndroid.show(JSON.stringify(responseData),2000);
-
-       
-
+       AsyncStorage.setItem('videosJson',JSON.stringify(responseData));
         
-      }).catch((err)=>{ToastAndroid.show(err.message,3000)})
+      }).catch((err)=>{ToastAndroid.show(err.message,3000);this.setState({
+          isRefreshing:false
+        });})
       .done();
   }
 

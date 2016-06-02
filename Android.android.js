@@ -21,6 +21,10 @@ import {
 
  
 const url = "http://gank.io/api/data/Android/15/";
+const person = {
+  name:'jack',
+  gender:'male'
+};
 
 let pageIndex = 1;
  
@@ -33,20 +37,18 @@ export default class Android extends Component {
         dataSource:new ListView.DataSource({
           rowHasChanged:(row1,row2)=>row1!==row2,
         }),  
-        loaded:false,
         loadMore: false,
+        isRefreshing:true,
         newContent:null,
     };
   }
 
   componentDidMount(){
+    this.getAsycStorage();
     this.fetchNewsData();
   }
 
   render() {
-    if(!this.state.loaded) return (<View style = {{flex:1,justifyContent:'center',alignItems:'center',backgroundColor:'white'}}>
-        <ProgressBarAndroid styleAttr="Inverse" color='#1e90ff' />
-      </View>);
     return (
       <View style={{flex:1,padding:5,backgroundColor:'#f1f1f1'}}>
         <ListView
@@ -62,6 +64,17 @@ export default class Android extends Component {
               colors={['#1e90ff']}/>}/>
       </View>
     );
+  }
+
+  getAsycStorage(){
+    AsyncStorage.getItem('AndroidJson', (err, result) => {
+      if(result){
+        this.setState({
+            dataSource:this.state.dataSource.cloneWithRows(JSON.parse(result).results),
+            loaded: true,
+        });
+      }
+    });
   }
 
  
@@ -108,13 +121,18 @@ export default class Android extends Component {
       .then((response) => response.json())
 
       .then((responseData) => {
+        AsyncStorage.setItem('AndroidJson',JSON.stringify(responseData));
         this.setState({
           newContent:responseData.results,
           dataSource:this.state.dataSource.cloneWithRows(responseData.results),
-          loaded: true,
           isRefreshing:false
         });
-      }).catch((err)=>{ToastAndroid.show(err.message,3000)})
+      }).catch((err)=>{
+        ToastAndroid.show(err.message,3000);
+         this.setState({
+          isRefreshing:false
+        });
+      })
       .done();
   }
 
@@ -130,8 +148,6 @@ export default class Android extends Component {
         this.setState({
           newContent:[...this.state.newContent, ...responseData.results],
           dataSource:this.state.dataSource.cloneWithRows(this.state.newContent),
-          loaded: true,
-          isRefreshing:false,
           loadmore:false
         });
       }).catch((err)=>{ToastAndroid.show(err.message,1000)})
