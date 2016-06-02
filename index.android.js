@@ -12,7 +12,8 @@ import {
   StatusBar,
   Navigator,
   Platform,
-  BackAndroid
+  BackAndroid,
+  ToastAndroid,
 } from 'react-native';
 
 import Home from './Home';
@@ -20,6 +21,7 @@ import Detail from './Detail';
 import ImagePage from './ImagePage';
 
 let nav;
+let last = 0;
 
 class Gank_ReactNative extends Component {
  constructor(props) {
@@ -40,7 +42,18 @@ componentDidMount(){
         this.nav.pop();
         return true;
       }
+     
+      let current = new Date().getTime();
+      if(current-last>2000){
+        last = new Date().getTime();
+        ToastAndroid.show('再次点击退出',1000);
+        return true;
+      }else{
         return false;
+      }
+     
+      
+       
   } 
  
   renderScene(route, navigator){
